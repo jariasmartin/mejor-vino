@@ -1,5 +1,5 @@
 # Clasificación de calidad de "Vinho Verde"
-## Caso práctico analítico de predicción de calidad del vino portugués "Vinho Verde"
+## Caso práctico analítico de clasificación de calidad del vino portugués "Vinho Verde"
 
 ## Autor
 
