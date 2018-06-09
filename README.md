@@ -1,5 +1,5 @@
-# mejor-vino
-## Caso práctico analítico relacionado con variantes rojas y blancas del vino portugués "Vinho Verde"
+# Clasificación de calidad de "Vinho Verde"
+## Caso práctico analítico de predicción de calidad del vino portugués "Vinho Verde"
 
 ## Autor
 
