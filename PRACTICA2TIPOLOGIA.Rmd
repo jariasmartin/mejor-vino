@@ -1,0 +1,237 @@
+---
+title: "PRACTICA2TIPOLOGIA"
+author: "Jorge Arias Martín"
+date: "9/6/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(skimr)
+library(psych)
+library(car)
+library(corrgram)
+library(nortest)
+```
+
+# PRACTICA 2 TIPOLOGIA DE DATOS
+
+## Jorge Arias Martín
+
+## ¿Por qué es importante y qué pregunta/problema pretende responder?
+El dataset proporcionado en la practica es el Red Wine Quality https://www.kaggle.com/uciml/red-wine-quality-cortez-et-al-2009
+
+El Dataset contienen los valores fisicoquímicos y sensoriales de las variantes rojas del vino portugués "Vinho Verde". Para más detalles, consulte la referencia [Cortez et al., 2009].No hay datos sobre los tipos de uva, la marca del vino, el precio de venta del vino, etc.).
+
+Los conjuntos de datos se pueden tomar como tareas de Regresión Lineal Las clases están ordenadas y no equilibradas (por ejemplo, hay muchos más vinos normales que excelentes o malos).
+
+Pretendo determinar qué propiedades fisicoquímicas hacen que un vino sea clasificado como "bueno"
+
+## Integración y selección de los datos de interés a analizar.
+
+Los datos proporcionados están disponibles en CSV; el fichero proporciona en la primera linea, el nombre de los campos para facilitar la tarea de clasificación y dispone de un total de 1599 lineas de datos
+Las columnas disponibles son las siguientes:
+
+  fixed acidity	(fisicoquímico)
+  volatile acidity (fisicoquímico)
+  citric acid	(fisicoquímico)
+  residual sugar (fisicoquímico)
+  chlorides	(fisicoquímico)
+  free sulfur dioxide	(fisicoquímico)
+  total sulfur dioxide (fisicoquímico)
+  density	(fisicoquímico)
+  pH (fisicoquímico)
+  sulphates	(fisicoquímico)
+  alcohol	(fisicoquímico)
+  quality	(subjetivo)
+
+Es importante destacar que las primeras 11 columnas son datos objetivos obtenidos a través de métodos cientificos mientras que la última columna, se trata de un dato subjetivo y es obtenido por un metodo desconocido, clasificando entre 3 y 8 la calidad del vino.
+
+Procedo a la carga del CSV con los siguientes parámetros generando un dataframe denominado winequality
+
+```{r  }
+library(readr)
+winequality <- read_csv("~/Downloads/winequality-red.csv")
+#View(winequality)
+```
+
+Para comprobar la calidad de los datos, realizo un Summary para ver el aspecto que tiene la estadistica de los datos
+
+```{r}
+summary(winequality)
+```
+
+Podemos observar información interesante en los datos proporcionados por el summary.
+En primer lugar observamos que los máximos y mínimos de las 12 columnas del dataframe contienen datos numéricos
+
+```{r}
+str(winequality)
+```
+
+Observamos que hay 1599 observaciones  y 12 variables en el dataframe
+Las primeras columnas son numéricas y la última contiene valores enteros
+En concreto la columna quality es la variable objetivo del estudio; para ver detalles de la misma utilizamos el comando table
+
+```{r}
+table(winequality$quality)
+```
+
+Observamos una concentración en los valores 5 y 6 de calidad; con valores entre 3 y 8, en el summary, vemos como valor medio 5.636
+
+Procedemos 
+
+```{r}
+plot(winequality)
+```
+
+como resumen del análisis utilizamos la función skimr
+
+```{r}
+skim(winequality)
+```
+
+
+## Limpieza de los datos.
+
+El dataframe no tiene campos vacios ni nulos, es un buen dataset desde el punto de vista de limpieza.
+
+### Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?
+
+El dataset no tiene elementos vacios, lo podemos comprobar con el siguiente comando
+
+```{r}
+sapply(winequality, function(x) sum(length(which(is.na(x))))) 
+```
+
+
+
+### Identificación y tratamiento de valores extremos.
+
+vamos a comprobar los Outlier que tiene las variables con el comando
+
+```{r}
+boxplot(winequality$`fixed acidity`)
+boxplot(winequality$`volatile acidity`)
+boxplot(winequality$`citric acid`)
+boxplot(winequality$`residual sugar`)
+boxplot(winequality$chlorides)
+boxplot(winequality$`free sulfur dioxide`)
+boxplot(winequality$`total sulfur dioxide`)
+boxplot(winequality$density)
+boxplot(winequality$pH)
+boxplot(winequality$sulphates)
+boxplot(winequality$alcohol)
+```
+
+En esta variable encontramos una serie de valores extremos a la media los cuales son necesarios estudiar.
+En este caso en particular, considero necesario dejar los valores atípicos de los datos objetivos como son los de  los valores fisicoquímicos obtenidos 
+Otro caso es el Quality, puesto que es subjetivo, tampoco conocemos el margen de error que puede tener la decisión de haberlo marcado con el valor 8.
+
+Para la variable a buscar obtenemos los siguients outlers
+```{r}
+boxplot(winequality$quality)
+fivenum(winequality$quality)
+```
+
+Lo cual quiere decir que hay dos valores extremos en 3 y en 8 y la media coincide con los cinco números de Tukey
+
+* minimum = 3 
+* lower-hinge = 5 
+* median = 6 
+* upper-hinge = 6
+* maximum = 8
+
+La conclusión es que un gran número de valores se concentran alrededor del 5 y 6 de calidad (el valor de la media y mediana están ente estos dos valores)
+
+## Análisis de los datos.
+
+### Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar).
+
+En este caso en particular, es necesario conocer el grado de influencia que tienen las variables respecto a la calidad del vino, así que se analizará como una regresión lineal
+
+En primer lugar queremos comprobar que relacción existe entre las variables para buscar que no existe colinialidad (variables que se influyen entre ellas).Esta información es crítica para identificar las mejores variables predictoras
+
+Para realizar dicho análisis es necesario calcular el coeficiente de correlacción de cada par de variables
+
+```{r}
+multi.hist(x=winequality,dcol=c("blue", "red"),dlty = c("dotted","solid"),main="")
+
+```
+
+```{r}
+round(cor(x=winequality,method = "pearson"),3)
+```
+
+Conclusiones:
+Las variables que tienen una mayor relacción lineal con la variable quality son:
+
+- Alcohol 0.476
+- Sulfatos 0.251
+
+Comrpbamos si están relaccionadas entre ellas
+
+```{r}
+cor(winequality$alcohol,winequality$sulphates)
+```
+
+Comprobamos que no hay colinialidad entre ambas variables (0.09359475).
+
+Ahora comprobamos con un modelos de regresión lineal multiple la influencia de las variables predictoras (todas menos quality) sobre la variable dependiente (quality)
+
+```{r}
+calidadlm <- lm(quality  ~ .,data=winequality)
+summary(calidadlm)
+```
+Este modelo explica el 35% de los casos (variablidad) con todos los datos del dataset
+
+Observamos que las variables independientes más influyentes en la variable dependiente quality (calidad del vino) son las siguientes:
+
+- alcohol 
+- sulphates 
+
+Así creamos el siguiente modelo con solo las dos variables más predictoras (Sulfatos y Alcohol)
+
+```{r}
+modelo<-lm(quality  ~ sulphates+alcohol,data=winequality)
+summary(modelo)
+```
+Ahora, con un modelo más simplificado, podemos explicar el 27% de la variabilida de la calidad.
+
+
+### Comprobación de la normalidad y homogeneidad de la varianza.
+
+Realizamos un análisis de inflacción de varianza de las variables prescriptoras anteriores
+
+```{r}
+vif(modelo)
+sapply(winequality, ad.test)
+```
+
+Como el valor de inflación de la varianza en inferior a 5 , no se considera colinialidad: confirmamos que son buenos predictores
+
+El valor del P-Value es inferior a 0.05 de Alcohol y Sulfatos por lo tanto no sigue una distribución normal, es más ninguna de las columnas lo siguen
+
+De lo que podemos asegurar que no hay correlacción lineal muy alta entre los predictores, por lo tanto son las variables que más influyen en la calidad del vino
+
+
+### Aplicación de pruebas estadísticas para comparar los grupos de datos.
+
+
+Se ha realizado la regresión lineal an el apartado anterior
+
+## Representación de los resultados a partir de tablas y gráficas.
+
+```{r}
+corrgram(winequality, lower.panel=panel.shade, upper.panel=panel.ellipse)
+```
+
+Comprobamos en la última final (quality) que los colores más azules son variables sin correlacción que más influyen en la calidad
+
+
+## Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
+Los resultados obtenidos nos demuestran que cuanto máyor sea el valor de la variable alcohol o sulfatos, mayor será la calidad del vino 
+
+
