@@ -17,7 +17,7 @@ Jorge Arias Martín, jariasmartin@uoc.edu
 
 Puede chequear el dataset en la siguiente dirección:
 
-[https://github.com/Bengis/nba-gap-cleaning/blob/master/data/nba_out.csv](https://github.com/Bengis/nba-gap-cleaning/blob/master/data/nba_out.csv)
+[https://www.kaggle.com/uciml/red-wine-quality-cortez-et-al-2009](https://www.kaggle.com/uciml/red-wine-quality-cortez-et-al-2009)
 
 ## Licencia
 
